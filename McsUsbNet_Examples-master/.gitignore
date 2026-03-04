@@ -1,0 +1,10 @@
+*/bin
+*.suo
+*/obj
+*.bak
+Release/
+Debug/
+*.user
+.vs
+*.asv
+/Examples/Python/__pycache__/
