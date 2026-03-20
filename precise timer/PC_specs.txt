@@ -1,0 +1,29 @@
+
+Host Name:                 x
+OS Name:                   Microsoft Windows 10 Home
+OS Version:                10.0.19045 N/A Build 19045
+OS Manufacturer:           Microsoft Corporation
+OS Configuration:          Standalone Workstation
+OS Build Type:             Multiprocessor Free
+Registered Owner:          x
+Registered Organization:
+Product ID:                x-x-x-x
+Original Install Date:     7/26/2023, 9:07:17 PM
+System Boot Time:          3/20/2026, 12:23:14 AM
+System Manufacturer:       Dell Inc.
+System Model:              Inspiron 3847
+System Type:               x64-based PC
+Processor(s):              1 Processor(s) Installed.
+                           [01]: Intel64 Family 6 Model 60 Stepping 3 GenuineIntel ~3401 Mhz
+BIOS Version:              Dell Inc. A05, 8/18/2014
+Windows Directory:         C:\Windows
+System Directory:          C:\Windows\system32
+Boot Device:               \Device\HarddiskVolume1      
+System Locale:             en-us;English (United States)
+Input Locale:              en-us;English (United States)
+Time Zone:                 (UTC-06:00) Central Time (US & Canada)
+Total Physical Memory:     16,335 MB
+Available Physical Memory: 5,762 MB
+Virtual Memory: Max Size:  18,767 MB
+Virtual Memory: Available: 4,193 MB
+Virtual Memory: In Use:    14,574 MB

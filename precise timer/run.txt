@@ -1,0 +1,5 @@
+# DLL (for Python):
+gcc -O2 -shared -o precise_timer.dll precise_timer.c -lkernel32
+
+# Standalone test .exe:
+gcc -O2 -DSTANDALONE -o precise_timer.exe precise_timer.c -lkernel32
