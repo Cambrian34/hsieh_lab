@@ -1,0 +1,51 @@
+Phase 1 — Data preparation
+
+ Inventory all available 24–48h MEA recordings (DIV 20+) 
+See https://www.dropbox.com/scl/fo/zzsbzcdwiiv0az2wqtuau/AFWH0nH-Bq6qkHBILLkHpTI?rlkey=xdcnhslrqsw4nfu9xy9zaopch&st=6vkz6xec&dl=0 and read here the brief description of what these data are: https://www.dropbox.com/scl/fi/mf4o3rsmkfjeji5kyxppy/dataset_readme.pdf?rlkey=i2fwbtpjd8pgn5y2of1kq2v4i&st=te8vt0se&dl=0  
+ As the spike times are saved in a *.mat format, you might need to convert them (using MATLAB) or use directly Python (SciPy library - see https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.loadmat.html#scipy.io.loadmat)
+ Let me know when you are at this point: I will teach you how to quickly plot a raster plot and an histogram of the spike times (like Fig. 8 https://www.frontiersin.org/files/Articles/76792/fninf-08-00026-HTML/image_m/fninf-08-00026-g008.jpg or our old paper).
+ You may then want to "define" what a burst is, see for instance this paper, although at this very stage it is not so crucial. You could get by simply taking a peak-detection algorithm run on the histogram trace. It is anyway important to define the timestamps of when the burst arises. This is going to be our ground truth.
+Phase 2 — Feature engineering
+
+ Implement a sliding-window feature extraction pipeline (see the Claude chat I shared with you - let me know if you are at this point and I will help you): pFR, pFR variance, STTC (elephant.spike_train_correlation.sttc), fraction of active electrodes, Shannon entropy, CV-ISI, elapsed time since last burst
+ Implement the IBI-normalized elapsed time feature τ~(t)=τelapse(t)/μ^IBI(t)τ~(t)=τelapse​(t)/μ^​IBI​(t) with a running IBI estimator (last 10–20 observed IBIs)
+ Implement the adaptive z-score normalization using a sliding baseline window (exclude burst windows from baseline estimation)
+ Run a preliminary hub electrode identification on each recording (pairwise lead-lag cross-correlation or Granger causality between electrodes; rank by out-degree; select top 5–10)
+ Add hub activity as an additional feature stream
+ Implement the labeling scheme: define positive windows ([tNB−Δt, tNB−ϵ][tNB​−Δt,tNB​−ϵ]), negative windows, and exclusion zones around bursts and post-burst refractory periods
+ Sanity-check class balance: log the positive/negative ratio across all recordings; expect ~5–15% positive class
+Phase 3 — Baseline model
+
+ Set up experiment tracking with wandb (or MLflow)
+ Install pytorch-tcn (pip install pytorch-tcn) and implement the TCN binary classifier with causal dilated convolutions
+ Install lightning and wrap the TCN in a LightningModule for clean training loops, early stopping, and checkpointing
+ Implement focal loss (γ=2γ=2) in PyTorch ( torchvision.ops.sigmoid_focal_loss or custom implementation)
+ Apply strict causal temporal split per recording (50% train / 25% validation / 25% test)
+ Train the baseline TCN on a single recording first; evaluate with PR-AUC and F1 at optimal threshold (sklearn.metrics)
+ Iterate on hyperparameters: prediction horizon ΔtΔt, look-back window LL, number of TCN blocks, dilation schedule, dropout — use wandb sweep
+Phase 4 — Cross-culture evaluation
+
+ Implement leave-one-culture-out cross-validation across the full recording archive
+ Log zero-shot PR-AUC on each held-out culture to establish a cross-culture generalization baseline
+ Implement the adaptive normalization pipeline for the target culture (running z-score updated online)
+ Implement the two-stage fine-tuning procedure: freeze TCN backbone, fine-tune classifier head on the first 30 min of target culture data, then gradually unfreeze upper layers
+Phase 5 — Meta-learning (if cross-culture baseline is insufficient)
+
+ Install learn2learn (pip install learn2learn)
+ Restructure the training loop as a MAML meta-learning problem: each culture = one task, support set = first portion, query set = remainder
+ Train with FOMAML or Reptile across source cultures
+ Evaluate adaptation speed: how many burst events in the target culture are needed before performance matches within-culture levels?
+ Install moskomule/ewc.pytorch and add EWC regularization to the online fine-tuning loop to prevent catastrophic forgetting
+Phase 6 — Interpretability and validation
+
+ Install shap and run shap.DeepExplainer on the trained TCN to compute per-feature and per-timestep attributions
+ Verify that SHAP identifies hub electrode activity and elapsed-since-last-burst as top features (biological sanity check)
+ Install captum and cross-validate with Integrated Gradients attributions
+ Plot mean prediction lead time distribution for true positives across all test cultures
+ Write up results and compare against a logistic regression baseline trained on the same features (important to quantify the added value of the deep architecture)
+Phase 7 — Online deployment (closed-loop) - as soon as the readout of the data from the MCS system works
+
+ Implement a real-time inference loop: sliding window extraction → feature computation → model forward pass → threshold comparison → trigger signal
+ Benchmark inference latency: the full pipeline must complete in ≪Δt≪Δt (target < 500 ms wall-clock time per prediction step)
+ Export the trained TCN to ONNX (torch.onnx.export) for deployment outside the Python training environment if needed
+ Integrate with your MEA acquisition system's closed-loop API or stimulation trigger interface
