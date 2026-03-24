@@ -28,7 +28,11 @@ if __name__ == "__main__":
     print(f"Frequency : {t.freq_hz():,} Hz  |  Resolution: {t.resolution_us():.4f} us\n")
     t0 = t.ticks()
     for i in range(10):
-        time.sleep(0.0002)          # ~200 us
+        #time.sleep(0.0002)          # ~200 us #Showed a large microsecond jump of ~15000
+        target = t.microseconds() + 200.0 #
+        #time.sleep(0.0001) #tested for a hybrid approach that showed slight improvemnt to original but still expoential
+        while t.microseconds() < target:
+            pass
         t1 = t.ticks()
         print(f"sample {i+1:2d}  elapsed: {t.microseconds():10.2f} us  "
               f"delta: {t.delta_us(t0,t1):8.2f} us")
