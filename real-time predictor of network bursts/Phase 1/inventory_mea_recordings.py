@@ -37,15 +37,15 @@ def inventory_and_convert_mea_recordings(root_folder, output_root):
                             f.write(f"{row[0]},{int(row[1])}\n")
 
                 else:
-                    print(f"⚠️ 'spiketime' not found in {file}")
+                    print(f"'spiketime' not found in {file}")
 
     return recordings
 
 
-# ROOT input (your Cntr folder)
+# ROOT input 
 root_folder = r"C:\\Users\\alich\\Downloads\\hsieh_lab\\real-time predictor of network bursts\\Cntr"
 
-# OUTPUT root (new structured folder)
+# OUTPUT root 
 output_root = r"C:\\Users\\alich\\Downloads\\hsieh_lab\\real-time predictor of network bursts\\Output"
 
 mea_recordings = inventory_and_convert_mea_recordings(root_folder, output_root)
