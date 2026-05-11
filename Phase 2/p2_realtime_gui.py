@@ -180,7 +180,7 @@ class RealtimeGUI:
     """Main GUI for real-time spike visualization and stimulation"""
     def __init__(self, root):
         self.root = root
-        self.root.title("Phase 2: Real-Time Spike Viewer + Stimulation")
+        self.root.title("Real-Time Spike Viewer + Stimulation")
         self.root.geometry("1400x800")
         
         # Initialize devices
@@ -194,9 +194,7 @@ class RealtimeGUI:
         if self.mea_connected:
             self.mea.start()
         else:
-            # Start a simulation thread if MEA is not connected
-            self.sim_thread = threading.Thread(target=self._simulation_thread, daemon=True)
-            self.sim_thread.start()
+            print("MEA not connected. Simulated data generation is disabled.")
         
         # Create GUI elements
         self.create_widgets()
@@ -216,6 +214,7 @@ class RealtimeGUI:
         # This is the size of a single data chunk from the callback
         chunk_size = self.mea.callback_threshold 
         
+        #redacted
         while True:
             # Generate a chunk of fake data (random noise)
             # The real data is int32, so let's simulate that.
@@ -310,7 +309,7 @@ class RealtimeGUI:
         """Send stimulation pulse"""
         if not self.stim_connected:
             messagebox.showwarning("Warning", "Stimulator not connected (running in simulation)")
-            # In simulation mode we just show a success message to indicate it worked in logic
+            # In simulation mode it just shows a success message to indicate it worked in logic
             # return
 
         try:
