@@ -19,7 +19,15 @@ import time
 # MEA Device references
 try:
     import clr
-    clr.AddReference(os.path.dirname(os.path.abspath(__file__)) + r'\..\..\McsUsbNet\x64\McsUsbNet.dll')
+    dll_path = r"C:\Users\omi727\OneDrive - University of Texas at San Antonio\Desktop\LAb\hsieh_lab\Phase 2\McsUsbNet\x64\McsUsbNet.dll"
+    # Debug: Check if the path exists
+    if os.path.exists(dll_path):
+        print(f"DLL found at: {dll_path}")
+    else:
+        print(f"DLL NOT found at: {dll_path}")
+        print(f"Looked in: {dll_path}")
+    clr.AddReference(dll_path)
+    from Mcs.Usb import CMcsUsbListNet
     from Mcs.Usb import CMcsUsbListNet, DeviceEnumNet, CMeaDeviceNet, CStg200xDownloadNet
     from Mcs.Usb import McsBusTypeEnumNet, DataModeEnumNet, SampleSizeNet, SampleDstSizeNet
     from Mcs.Usb import STG_DestinationEnumNet
@@ -95,13 +103,20 @@ class MEADataAcquisition:
 
     def stop(self):
         if self.device:
-            self.device.StopDacq()
-            self.is_recording = False
+            try:
+                self.device.StopDacq()
+                self.is_recording = False
+            except:
+                pass  # Ignore errors if device not connected
 
     def disconnect(self):
         if self.device:
-            self.stop()
-            self.device.Disconnect()
+            try:
+                self.stop()
+                self.device.Disconnect()
+            except:
+                pass  # Ignore errors if device not connected
+        self.device = None
 
 class StimulationController:
     """Handles electrical stimulation via STG200x"""
@@ -120,6 +135,7 @@ class StimulationController:
             
             self.device = CStg200xDownloadNet()
             self.device.Connect(deviceList.GetUsbListEntry(0))
+            time.sleep(0.5)  # Give device time to initialize
             self.is_connected = True
             
             voltageRange = self.device.GetVoltageRangeInMicroVolt(0)
@@ -133,8 +149,17 @@ class StimulationController:
     def send_pulse(self, channels=[0], amplitude_nA=100000, duration_us=500000, frequency_hz=120):
         """Send a stimulation pulse"""
         if not self.is_connected or not self.device:
+            print("Stimulation device not connected")
             return False
         try:
+            # Stop any ongoing stimulation first
+            print("Stopping any ongoing stimulation...")
+            try:
+                self.device.SendStop()
+                time.sleep(0.1)  # Brief pause
+            except:
+                pass  # Ignore if already stopped
+            
             # Simple biphasic pulse pattern
             num_pulses = int(frequency_hz * (duration_us / 1000000))
             if num_pulses == 0:
@@ -156,6 +181,7 @@ class StimulationController:
                 if idx < 4:
                     channelmap_list[idx] |= (1 << (ch % 32))
             
+            print(f"Channel map: {channelmap_list}")
             channelmap = Array[UInt32](channelmap_list)
             syncoutmap = Array[UInt32]([1, 0, 0, 0])
             repeat = Array[UInt32]([1, 0, 0, 0])
@@ -163,18 +189,32 @@ class StimulationController:
             amplitude = Array[Int32](amplitude_list)
             duration = Array[UInt64](duration_list)
             
-            self.device.SetupTrigger(0, channelmap, syncoutmap, repeat)
+            # Set current mode BEFORE setup trigger
+            print("Setting current mode...")
             self.device.SetCurrentMode()
+            print("Setting up trigger...")
+            self.device.SetupTrigger(0, channelmap, syncoutmap, repeat)
+            print("Preparing and sending data...")
             self.device.PrepareAndSendData(0, amplitude, duration, STG_DestinationEnumNet.channeldata_current)
+            print("Starting stimulation...")
             self.device.SendStart(1)
+            print("Pulse sent successfully")
             return True
         except Exception as e:
             print(f"Error sending pulse: {e}")
+            print(f"Error type: {type(e).__name__}")
+            import traceback
+            traceback.print_exc()
             return False
 
     def disconnect(self):
         if self.device:
-            self.device.Disconnect()
+            try:
+                self.device.Disconnect()
+            except:
+                pass  # Ignore errors if device not connected
+        self.device = None
+        self.is_connected = False
 
 class RealtimeGUI:
     """Main GUI for real-time spike visualization and stimulation"""
