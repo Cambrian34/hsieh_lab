@@ -1,3 +1,5 @@
 .venv
 .vscode
 /real-time predictor of network bursts/Cntr
+.DS_Store
+.vscode/settings.json
