@@ -162,6 +162,7 @@ class RecorderGUI:
         self.write_index = 0
         self.display_decimation = 4
         self.spike_threshold = 3.0
+        self.sampling_rate = 25000
 
         self.plot_initialized = False
 
@@ -183,6 +184,18 @@ class RecorderGUI:
         self.duration_var = tk.StringVar(value="5")
         self.duration_entry = ttk.Entry(control_frame, textvariable=self.duration_var, width=6)
         self.duration_entry.pack(side=tk.LEFT, padx=4)
+
+        ttk.Label(control_frame, text="Sampling Rate (Hz):").pack(side=tk.LEFT, padx=4)
+        self.sampling_rate_var = tk.StringVar(value=str(self.sampling_rate))
+        self.sampling_rate_entry = ttk.Entry(control_frame, textvariable=self.sampling_rate_var, width=8)
+        self.sampling_rate_entry.pack(side=tk.LEFT, padx=4)
+
+        ttk.Label(control_frame, text="Spike Threshold (σ):").pack(side=tk.LEFT, padx=4)
+        self.threshold_var = tk.StringVar(value=str(self.spike_threshold))
+        self.threshold_entry = ttk.Entry(control_frame, textvariable=self.threshold_var, width=6)
+        self.threshold_entry.pack(side=tk.LEFT, padx=4)
+
+        ttk.Button(control_frame, text="Update Settings", command=self.update_settings).pack(side=tk.LEFT, padx=4)
 
         ttk.Label(control_frame, text="File:").pack(side=tk.LEFT, padx=4)
         self.filename_var = tk.StringVar(value="recording.npz")
@@ -242,6 +255,30 @@ class RecorderGUI:
             self.status_label.config(text="Status: simulation mode")
             self.connect_button.config(state=tk.DISABLED)
             self.mea.start()
+
+    def update_settings(self):
+        """Update sampling rate and spike threshold from GUI inputs."""
+        try:
+            sampling_rate = int(self.sampling_rate_var.get())
+            if sampling_rate <= 0:
+                raise ValueError("Sampling rate must be positive")
+            self.sampling_rate = sampling_rate
+            self.mea.sampling_rate = sampling_rate
+            self.mea.callback_threshold = sampling_rate // 20
+        except ValueError as e:
+            messagebox.showerror("Invalid Sampling Rate", f"Please enter a valid positive integer: {e}")
+            return
+
+        try:
+            threshold = float(self.threshold_var.get())
+            if threshold <= 0:
+                raise ValueError("Threshold must be positive")
+            self.spike_threshold = threshold
+        except ValueError as e:
+            messagebox.showerror("Invalid Threshold", f"Please enter a valid positive number: {e}")
+            return
+
+        messagebox.showinfo("Settings Updated", f"Sampling Rate: {self.sampling_rate} Hz\nSpike Threshold: {self.spike_threshold} σ")
 
     def select_file(self):
         path = filedialog.asksaveasfilename(
